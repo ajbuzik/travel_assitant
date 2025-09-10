@@ -7,11 +7,21 @@ name = "pypi"
 openai = "*"
 pandas = "*"
 scikit-learn = "*"
+osmnx = "*"
+ipykernel = "*"
+wikipedia-api = "*"
+minsearch = "*"
+python-dotenv = "*"
+qdrant-client = {extras = ["fastembed"], version = ">=1.14.2"}
+setuptools = "*"
 
 [dev-packages]
 tqdm = "*"
 notebook = "*"
 ipywidgets = "*"
+setuptools = "*"
+hyperopt = "*"
+optuna = "*"
 
 [requires]
 python_version = "3.13"
