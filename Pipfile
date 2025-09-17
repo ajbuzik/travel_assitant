@@ -22,6 +22,11 @@ ipywidgets = "*"
 setuptools = "*"
 hyperopt = "*"
 optuna = "*"
+mistralai = "*"
+pyarrow = "*"
+matplotlib = "*"
+seaborn = "*"
+google = "*"
 
 [requires]
 python_version = "3.13"
