@@ -2,6 +2,10 @@ import pandas as pd
 from qdrant_client import models
 import google.generativeai as genai
 import streamlit as st
+from openai import OpenAI
+import re
+import json
+
 
 ENTRY_TEMPLATE = """
 
@@ -127,12 +131,38 @@ def gemini_llm(prompt):
             )
     )
     if response.candidates and response.candidates[0].content.parts:
-        return response.candidates[0].content.parts[0].text
+        answer_text = response.candidates[0].content.parts[0].text
+        
+        metadata = getattr(response, "usage_metadata", {})
+
+        token_count = metadata.total_token_count
+        input_tokens = metadata.prompt_token_count
+        model_name = response.model_version
+
+
+        cost = None
+        if token_count is not None:
+        
+            cost = token_count / 1_000_000 * 0.4
+
+        return {
+        "answer": answer_text,
+        "tokens_used": token_count,
+        "input_tokens": input_tokens,
+        "estimated_cost_usd": cost,
+        "model_name": model_name,
+        }
     else:
-          return ""
+        return {
+        "answer": "",
+        "tokens_used": None,
+        "input_tokens": None,
+        "estimated_cost_usd": None,
+        "model_name": None,
+        }
     
 
-def rag(st,query,DOCUMENTS, qdrant_client, prompt_template = PROMPT_TEMPLATE,entry_template = ENTRY_TEMPLATE):
+def rag(st,query,DOCUMENTS, qdrant_client,OPENAI_API_KEY, prompt_template = PROMPT_TEMPLATE,entry_template = ENTRY_TEMPLATE):
     if 'previous_answer' not in st.session_state:
         st.session_state.previous_answer = None
     search_results = rrf_search(qdrant_client, query)
@@ -145,8 +175,103 @@ def rag(st,query,DOCUMENTS, qdrant_client, prompt_template = PROMPT_TEMPLATE,ent
     prompt = build_prompt(prompt_template,query, context)
     answer = gemini_llm(prompt)
 
+    labels, judge_stats = judge_label(query, context, answer["answer"], OPENAI_API_KEY)
+    score = quality_score_from_labels(labels)
+    results = {
+        "question": query,
+        "answer": answer['answer'],
+        "quality_score": score,
+        "faithfulness": labels.get("faithfulness"),
+        "groundedness": labels.get("groundedness"),
+        "relevance": labels.get("relevance"),
+        "completeness": labels.get("completeness"),
+        "coherence": labels.get("coherence"),
+        "conciseness": labels.get("conciseness"),
+        "tokens_used": answer["tokens_used"],
+        "input_tokens": answer["input_tokens"],
+        "estimated_cost_usd": answer["estimated_cost_usd"],
+        "model_name": answer["model_name"],
+        "eval_tokens_used": judge_stats["total_tokens"],
+        "eval_input_tokens": judge_stats["prompt_tokens"],
+        "eval_estimated_cost_usd": judge_stats["estimated_cost_usd"],
+
+    }
+
+ 
+
     st.session_state.previous_answer = answer
-    return answer
+    return results
 
+    
 
+JUDGE_PROMPT_TEMPLATE = """
+You are an evaluator. Your task is to classify the quality of the answer provided by a RAG system.
+Return ONLY JSON with labels (no extra text). Use one of the allowed labels for each criterion.
+
+Faithfulness: ["NON_FAITHFUL","PARTLY_FAITHFUL","FAITHFUL"]
+Groundedness: ["NON_GROUNDED","PARTLY_GROUNDED","GROUNDED"]
+Relevance: ["NON_RELEVANT","PARTLY_RELEVANT","RELEVANT"]
+Completeness: ["NON_COMPLETE","PARTLY_COMPLETE","COMPLETE"]
+Coherence: ["NON_COHERENT","PARTLY_COHERENT","COHERENT"]
+Conciseness: ["NON_CONCISE","PARTLY_CONCISE","CONCISE"]
+
+Question: {question}
+Context: {context}
+Answer: {answer}
+
+Return JSON exactly like:
+{{"faithfulness":"...", "groundedness":"...", "relevance":"...", "completeness":"...", "coherence":"...", "conciseness":"..."}}
+"""
+
+def judge_label(question, context, answer,OPENAI_API_KEY):
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
+    prompt = JUDGE_PROMPT_TEMPLATE.format(question=question, context=context, answer=answer)
+    resp = openai_client.chat.completions.create(
+        model="gpt-4o-mini",  # LLM-sędzia
+        messages=[{"role":"user","content":prompt}],
+        temperature=0.0)
+    # Collect usage statistics if available
+    usage = getattr(resp, "usage", None)
+    stats = {
+        "prompt_tokens": usage.prompt_tokens if usage else None,
+        "total_tokens": usage.total_tokens if usage else None,
+
+    }
+
+    # Calculate cost (example: $5 per million tokens for GPT-4o-mini, adjust as needed)
+    cost = None
+    if usage and usage.total_tokens is not None:
+        cost = usage.total_tokens / 1_000_000 * 4
+
+    stats["estimated_cost_usd"] = cost
+
+    text = resp.choices[0].message.content.strip()
+
+    text = re.sub(r"```json|```", "", text).strip()
+    
+    try:
+        labels = json.loads(text)
+    except json.JSONDecodeError:
+        try:
+            labels = eval(text)
+        except Exception as e:
+            print("Failed to parse JSON from model response:", repr(text))
+            raise e
+    return labels,stats
+
+POSITIVE_MAPPING = {
+    "faithfulness": "FAITHFUL",
+    "groundedness": "GROUNDED",
+    "relevance": "RELEVANT",
+    "completeness": "COMPLETE",
+    "coherence": "COHERENT",
+    "conciseness": "CONCISE"
+}
+
+def quality_score_from_labels(labels):
+    score = 0
+    for crit, pos_label in POSITIVE_MAPPING.items():
+        if labels.get(crit) == pos_label:
+            score += 1
+    return score
 

@@ -1,67 +1,64 @@
-# travel_assitant
-**Krakow Travel Assistant** is an intelligent, AI-powered application designed to help you explore and experience the best of Krakow. Leveraging Retrieval-Augmented Generation (RAG) and advanced language models, this assistant provides personalized recommendations, answers travel-related questions, and helps you plan your visit with ease. Whether you're looking for historical sites, local cuisine, or hidden gems, the Krakow Travel Assistant is your go-to companion for discovering the city.
-## Features
+# Kraków Travel Assistant (RAG demo)
 
-- Retrieval-Augmented Generation (RAG) architecture
-- Integrates with OpenAI LLMs for natural language responses
-- Custom document ingestion and retrieval pipeline
-- FastAPI backend for API endpoints
-- Streamlit-based web UI for user interaction
+Small Retrieval-Augmented-Generation (RAG) demo that serves Points-Of-Interest (POI) recommendations for Kraków.
 
-## Installation
+## Quick overview
+- Streamlit UI: `travel_assistant/app.py`
+- RAG backend: `travel_assistant/rag.py` (prompt building, hybrid retrieval via Qdrant, Gemini calls)
+- Ingestion: `travel_assistant/ingest.py` (reads `data/krakow_pois_selected.csv`, creates Qdrant collection `hybrid_search`)
+- Optional Postgres (feedback): configured in `docker-compose.yml`
 
-```bash
-git clone https://github.com/yourusername/travel_assitant.git
-cd travel_assitant
-pip install -r requirements.txt
-```
+## Quick start (dev)
+1. Install deps
+   - Pipenv: `pipenv install` or use pip with `travel_assistant/requirements_file.txt`.
+2. Start local Qdrant (required for retrieval):
+   - PowerShell:
+     ```
+     docker run -p 6333:6333 -p 6334:6334 -v "${PWD}\qdrant_storage:/qdrant/storage" qdrant/qdrant
+     ```
+3. (Optional) Start Postgres + pgAdmin:
+   ```
+   docker-compose up -d
+   ```
+4. Run Streamlit UI (from repo root):
+   - PowerShell:
+     ```
+     streamlit run travel_assistant/app.py
+     ```
+5. Ingest data into Qdrant (if collection not present):
+   ```
+   python -m travel_assistant.ingest
+   ```
+   or
+   ```
+   python travel_assistant\ingest.py
+   ```
 
-## Usage
+## Environment variables
+- `GEMINI_API_KEY` — required for Google Gemini calls via `google.generativeai` (used in `travel_assistant/rag.py`)
+- `OPENAI_API_KEY` — referenced in README but not used by current code
 
-1. **Start the backend API:**
-    ```bash
-    uvicorn app.main:app --reload
-    ```
-2. **Launch the Streamlit UI:**
-    ```bash
-    streamlit run ui/app.py
-    ```
+Set env vars in OS or a `.env` file prior to running.
 
-## Configuration
+## Important details & conventions
+- Qdrant collection: `hybrid_search` (stores dense vectors named `jina-small` and sparse BM25 payloads).
+- Session state keys used by Streamlit app: `conversation_history`, `feedback_data`, `previous_answer`
+- RAG flow in `travel_assistant/rag.py`:
+  - `rrf_search()` → `filter_rrf_results()` → `build_context()` → `gemini_llm()`
+- CSV source: `data/krakow_pois_selected.csv` (documents contain `id`, `name`, `wiki_summary_en`, etc.)
+- Embedding dimensionality and vector config must match between embedder and Qdrant (`ingest.py`).
 
-- Set your OpenAI API key in the `.env` file:
-  ```
-  OPENAI_API_KEY=your_api_key_here
-  ```
+## Troubleshooting
+- ConnectionRefusedError / empty results: ensure Qdrant is running at `http://localhost:6333`.
+- Gemini API errors (500/timeout): verify `GEMINI_API_KEY`, model name in `rag.py`, and prompt length.
+- Vector size mismatch: check `vectors_config` size in `travel_assistant/ingest.py` and embedding model used.
 
-## Project Structure
+## Files to inspect when changing behavior
+- `travel_assistant/ingest.py`
+- `travel_assistant/rag.py`
+- `travel_assistant/app.py`
+- `data/*.csv`
 
-```
-travel_assitant/
-├── app/                # FastAPI backend
-│   ├── main.py
-│   └── ...
-├── ui/                 # Streamlit frontend
-│   └── app.py
-├── data/               # Sample documents
-├── requirements.txt
-└── README.md
-```
-
-## Ingestion
-
-## Evaluation
-
-## Retrieval
-
-
-
-## License
-
-MIT License
-
-## Acknowledgements
-
-- [LLM Zoomcamp](https://github.com/DataTalksClub/llm-zoomcamp)
-- [OpenAI](https://openai.com/)
-- [Streamlit](https://streamlit.io/)
+## Notes
+- Keep Streamlit app synchronous to preserve `st.session_state` behavior.
+- There are no unit tests in the repo; validate changes by running the Streamlit app and the ingest pipeline.

@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2025-10-17 20:07:51.253246",
+    "feedback_type": "positive",
+    "text_feedback": "",
+    "conversation_id": "9dbb85bd-ec72-4bd6-8b84-4d1c3fdadc86"
+  },
+  {
+    "timestamp": "2025-10-17 20:14:22.986730",
+    "feedback_type": "negative",
+    "text_feedback": "",
+    "conversation_id": "7700bca6-c3b5-4723-8eb1-42b57d9b9165"
+  },
+  {
+    "timestamp": "2025-10-17T21:11:02.170564",
+    "feedback_type": "positive",
+    "text_feedback": "",
+    "conversation_id": "898add13-1915-48b9-af44-cc0ba4a11b07"
+  },
+  {
+    "timestamp": "2025-10-17T21:23:07.480938",
+    "feedback_type": "positive",
+    "text_feedback": "wery nice",
+    "conversation_id": "b70bb492-3076-42f3-b36f-b99a8a6a338d"
+  }
+]

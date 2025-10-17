@@ -14,6 +14,10 @@ minsearch = "*"
 python-dotenv = "*"
 qdrant-client = {extras = ["fastembed"], version = ">=1.14.2"}
 setuptools = "*"
+streamlit = "*"
+psycopg2 = "*"
+pgcli = "*"
+"google.generativeai" = "*"
 
 [dev-packages]
 tqdm = "*"
