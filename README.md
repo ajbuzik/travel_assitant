@@ -55,7 +55,7 @@ docker-compose up
 
 How it should looks if everything is correct [`docker-compose up`](images/docker_compose_up.png):
 
-Open 'http://localhost:8501/' in your browser and enojoy application :) 
+Open 'http://localhost:8501/' in your browser and enojoy application 😄
 
 To stop the `app`:
 
