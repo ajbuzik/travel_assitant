@@ -12,26 +12,37 @@ a free course about LLMs and RAG.
 
 ## Project overview
 
-- Streamlit UI: `travel_assistant/app.py`
-- RAG backend: `travel_assistant/rag.py` (prompt building, hybrid retrieval via Qdrant, Gemini calls)
-- Ingestion: `travel_assistant/ingest.py` (reads `data/krakow_pois_selected.csv`, creates Qdrant collection `hybrid_search`)
+Kraków Travel Assistant is a small Retrieval-Augmented-Generation (RAG) application that helps users explore points-of-interest (POIs) in Kraków, Poland.
 
-# Quick start (dev)
+Main use cases
+- Answer user queries about attractions, opening hours, transport, and short travel tips.
+- Collect user feedback on answers to improve monitoring and quality.
+- Provide admin monitoring for conversation and feedback metrics.
+
+Key components
+- Streamlit UI: travel_assistant/app.py — Q&A Assistant and Monitoring pages.
+- RAG backend: travel_assistant/rag.py — prompt construction, hybrid retrieval from Qdrant, and LLM calls (Google Gemini via google.generativeai and gpt-4o-mini via OpenAI).
+- Ingestion: travel_assistant/ingest.py — reads data/krakow_pois_selected.csv and creates/updates the Qdrant collection hybrid_search.
+- Optional storage: Postgres (via docker-compose) for persisting conversations and feedback (helpers in travel_assistant/db.py and persistence.py).
+
+# Quick start 
 
 ## Preparation
 
-Best use what it inside .env_template file and change:
-- `GEMINI_API_KEY` — required for Google Gemini calls via `google.generativeai` (used in `travel_assistant/rag.py` - main RAG model)
-- `OPENAI_API_KEY` —  required for OpenAI Gemini calls via `openAI` (used in `travel_assistant/rag.py` in LLM as a Judge)
-- `MISTRAL_API_KEY` - required it you want to check Notebooks used to detect model.
+1. Clone repo and open project root.
 
-Call it `.env` file.
+2. Environment variables
+
+- Create a `.env` from `.env_template` and set:
+  - `GEMINI_API_KEY` — required for Google Gemini via `google.generativeai`.
+  - `OPENAI_API_KEY` — optional (used as a judge in some flows).
+  - `MISTRAL_API_KEY` — optional for notebooks.
+- On Windows (PowerShell): `copy .env_template .env` then edit `.env`.
  
-For dependency management, we use pipenv, so you need to install it:
+3. Python environment
+- Pipenv:
+  - pip install pipenv
 
-```bash
-pip install pipenv
-```
 
 
 ## Running the application
@@ -94,22 +105,23 @@ You should get info about Tables in database (converstion and feedback).
 
 There are two pages in app:
 
-* Q&A Assistant
-* Monitoring
+- Q&A Assistant: ask questions about Kraków POIs, see conversation history, and provide feedback.
+- Monitoring: admin page showing conversation/feedback stats, token usage, and LLM quality metrics.
+
 
 ### Q&A Assistant
 <p align="center">
   <img src="images/home_page.png">
 </p>
 
-Where user could write you answear. User will see conversation history and you could add feedback for each answear. User will see his feedback stats.
+Where user could write question and get answear. User will see conversation history and could add feedback for each answear. User will see his/her feedback stats.
 
 ### Monitoring
 <p align="center">
   <img src="images/monitoring.png">
 </p>
 
-To login in use `admin` and `password` or change in in  [`travel_assistant/auth.py`](travel_assistant/auth.py).
+To login in use `admin` and `password` or change in   [`travel_assistant/auth.py`](travel_assistant/auth.py).
 
 Here are monitoring statistic like:
 * token usage
@@ -117,7 +129,23 @@ Here are monitoring statistic like:
 * LLM quality (faithfulness, groundedness, relevance, completeness, coherence, conciseness)
 * User feedback sumarization
 
-## Code 
-The code for the application is in the travel_assitance folder:
-* [`app.py`](travel_assistant/app.py) - main code for streanlit
+You could add tp database test cases (really poor:P) from [data/answer_data.json](travel_assistant/data/answer_data.json), [data/feedback_data.json](travel_assistant/data/feedback_data.json)
+
+## Code
+
+The code for the application is in the travel_assistant folder:
+
+- [travel_assistant/app.py](travel_assistant/app.py) — Streamlit UI (Q&A Assistant & Monitoring).
+- [travel_assistant/rag.py](travel_assistant/rag.py) — RAG backend: prompt building, hybrid retrieval via Qdrant, and Gemini LLM calls.
+- [travel_assistant/ingest.py](travel_assistant/ingest.py) — Ingestion script: reads `data/krakow_pois_selected.csv` and creates/updates the Qdrant collection `hybrid_search`.
+- [travel_assistant/auth.py](travel_assistant/auth.py) — Simple auth used by the Monitoring page.
+- [travel_assistant/check_db.py](travel_assistant/check_db.py) — Helper to verify Postgres tables (conversations, feedback).
+- [travel_assistant/db_prep.py](travel_assistant/db_prep.py) — DB preparation utilities.
+- [travel_assistant/db.py](travel_assistant/db.py) — Database helpers used by the app and monitoring.
+- [travel_assistant/persistence.py](travel_assistant/persistence.py) — Persistence layer for conversations and feedback.
+- [travel_assistant/monitoring.py](travel_assistant/monitoring.py) — Monitoring page logic and stats.
+- [travel_assistant/ui.py](travel_assistant/ui.py) — UI helper components for Streamlit.
+- data file: [data/krakow_pois_selected.csv](travel_assistant/data/krakow_pois_selected.csv)
+
+
 
