@@ -21,7 +21,7 @@ Main use cases
 
 Key components
 - Streamlit UI: travel_assistant/app.py — Q&A Assistant and Monitoring pages.
-- RAG backend: travel_assistant/rag.py — prompt construction, hybrid retrieval from Qdrant, and LLM calls (Google Gemini via google.generativeai and gpt-4o-mini via OpenAI).
+- RAG backend: travel_assistant/rag.py — prompt construction, hybrid retrieval from Qdrant, and LLM calls (Google Gemini 2.5 Flash Lite via google.generativeai and gpt-4o-mini via OpenAI).
 - Ingestion: travel_assistant/ingest.py — reads data/krakow_pois_selected.csv and creates/updates the Qdrant collection hybrid_search.
 - Optional storage: Postgres (via docker-compose) for persisting conversations and feedback (helpers in travel_assistant/db.py and persistence.py).
 
