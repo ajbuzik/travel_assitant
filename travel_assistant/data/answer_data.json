@@ -98,5 +98,25 @@
     "eval_estimated_cost_usd": 0.028412,
     "id": "b70bb492-3076-42f3-b36f-b99a8a6a338d",
     "timestamp": "2025-10-17 21:22:40.761481"
+  },
+  {
+    "question": "Can you recommend some authentic Polish restaurants in Old Town?",
+    "answer": "For an authentic Polish dining experience in Kraków's Old Town, I highly recommend **Wierzynek**.\n\nThis historic restaurant is located right on the Main Square and offers a grand setting across four floors with various themed dining rooms. They specialize in Polish cuisine and have hosted many notable figures, suggesting a high-quality and traditional experience.",
+    "quality_score": 6,
+    "faithfulness": "FAITHFUL",
+    "groundedness": "GROUNDED",
+    "relevance": "RELEVANT",
+    "completeness": "COMPLETE",
+    "coherence": "COHERENT",
+    "conciseness": "CONCISE",
+    "tokens_used": 7799,
+    "input_tokens": 7731,
+    "estimated_cost_usd": 0.0031196,
+    "model_name": "gemini-2.5-flash-lite",
+    "eval_tokens_used": 6283,
+    "eval_input_tokens": 6218,
+    "eval_estimated_cost_usd": 0.025132,
+    "id": "7ea35fb3-d183-499f-bc9a-461d904ffa40",
+    "timestamp": "2025-10-19 18:48:59.310351"
   }
 ]
