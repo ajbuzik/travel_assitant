@@ -1,7 +1,7 @@
 # Kraków Travel Assistant (RAG demo)
 
 Small Retrieval-Augmented-Generation (RAG) demo that serves Points-Of-Interest (POI) recommendations for Kraków.
-
+Project overview
 ## Quick overview
 - Streamlit UI: `travel_assistant/app.py`
 - RAG backend: `travel_assistant/rag.py` (prompt building, hybrid retrieval via Qdrant, Gemini calls)

@@ -6,11 +6,11 @@ import streamlit as st
 from qdrant_client import QdrantClient
 from dotenv import load_dotenv
 import google.generativeai as genai
-
 import ui
 import monitoring
 import persistence
 import ingest
+import db
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -31,6 +31,33 @@ def init_session_state() -> None:
         st.session_state.previous_answer = None
 
 init_session_state()
+
+def _ensure_db_initialized_from_app() -> None:
+    """
+    Check whether the expected 'conversations' table exists; if not, call db.init_db().
+    This avoids dropping existing data on subsequent runs.
+    """
+    try:
+        conn = db.get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'conversations')"
+                )
+                exists = cur.fetchone()[0]
+                if not exists:
+                    # Only initialize when table missing
+                    db.init_db()
+        finally:
+            conn.close()
+    except Exception:
+        # If DB is unreachable or something goes wrong, do not crash the app.
+        # Initialization can be retried manually.
+        pass
+
+# Run DB initialization on first app start unless disabled by env var
+if os.getenv("TRAVEL_ASSISTANT_INIT_DB_ON_STARTUP", "1") == "1":
+    _ensure_db_initialized_from_app()
 
 # --- Cached resources -------------------------------------------------------
 @st.cache_resource
